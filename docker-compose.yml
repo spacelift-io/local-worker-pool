@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  launcher:
+    depends_on:
+      - dind_sidecar
+    environment:
+      DOCKER_HOST: unix:///var/run/dind_sidecar/docker.sock
+    env_file: .env
+    image: public.ecr.aws/spacelift/launcher:latest
+    volumes:
+      - dind_sockets:/var/run/dind_sidecar
+      - launcher_data:/opt/spacelift
+
+  dind_sidecar:
+    command: dockerd # Disable TLS certificate generation
+    image: docker:dind
+    privileged: true
+    volumes:
+      - dind_sockets:/var/run
+      - launcher_data:/opt/spacelift
+
+volumes:
+  # Share Docker sockets between the agent and the sidecar
+  dind_sockets:
+
+  # Share the Spacelift launcher data with the workers via the sidecar
+  launcher_data:
