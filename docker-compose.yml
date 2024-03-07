@@ -6,11 +6,18 @@ services:
       - dind_sidecar
     environment:
       DOCKER_HOST: unix:///var/run/dind_sidecar/docker.sock
+      # # Uncomment in case of a selfhosted VCS Agent Pool
+      # SPACELIFT_PRIVATEVCS_MAPPING_NAME_0: name-of-vcs-agent-pool
+      # SPACELIFT_PRIVATEVCS_MAPPING_BASE_ENDPOINT_0: https://your-seflhosted-vcs-endpoint.example.local:443
     env_file: .env
     image: public.ecr.aws/spacelift/launcher:latest
     volumes:
       - dind_sockets:/var/run/dind_sidecar
       - launcher_data:/opt/spacelift
+    # # Uncomment in case of running multiple Private Workers in the pool
+    # deploy:
+    #   mode: replicated
+    #   replicas: 2 # (2, or more)
 
   dind_sidecar:
     command: dockerd # Disable TLS certificate generation
@@ -19,6 +26,16 @@ services:
     volumes:
       - dind_sockets:/var/run
       - launcher_data:/opt/spacelift
+      # # Uncomment in case of needing private resolving within the containers running in DinD
+      # - ${PWD}/.docker-daemon.json:/etc/docker/daemon.json
+
+  # # Uncomment in case of a selfhosted VCS Agent Pool
+  # vcs:
+  #   environment:
+  #     SPACELIFT_VCS_AGENT_TARGET_BASE_ENDPOINT: https://your-seflhosted-vcs-endpoint.example.local:443
+  #     SPACELIFT_VCS_AGENT_VENDOR: gitlab
+  #   env_file: .vcs.env
+  #   image: public.ecr.aws/spacelift/vcs-agent:latest
 
 volumes:
   # Share Docker sockets between the agent and the sidecar
